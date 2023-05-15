@@ -24,20 +24,38 @@ def make_new_image(img,file):
     new_img.save(file[4:]) 
  
 def sobel_apply(img):
-    Gh = apply_sobel_op(img,[[-1,-2,-1],[0,0,0],[1,2,1]])
-    Gv = apply_sobel_op(img,[[-1,0,1],[-2,0,2],[-1,0,1]])
+    Gh = apply_op(img,[[-1,-2,-1],[0,0,0],[1,2,1]])
+    Gv = apply_op(img,[[-1,0,1],[-2,0,2],[-1,0,1]])
     G = (Gh*Gh+Gv*Gv)**0.5
     return G
 
-def apply_sobel_op(img,m):
+def prewitt_apply(img):
+    Gh = apply_op(img,[[-1,-1,-1],[0,0,0],[1,1,1]])
+    Gv = apply_op(img,[[-1,0,1],[-1,0,1],[-1,0,1]])
+    G = (Gh*Gh+Gv*Gv)**0.5
+    return G
+
+def apply_op(img,m,size=3):
     result = []
-    for i in range(1,img.shape[0]-1):
+    size_per_2 = size//2
+    for i in range(size_per_2,img.shape[0]-size_per_2):
         line = []
-        for j in range(1,img.shape[1]-1):
-            soma = sum(sum(m*img[i-1:i+2,j-1:j+2]))
+        for j in range(size_per_2,img.shape[1]-size_per_2):
+            soma = sum(sum(m*img[i-size_per_2:i+size_per_2+1,j-size_per_2:j+size_per_2+1]))
             line.append(soma)
         result.append(line)
     return np.array(result)
+
+def gauss_filter(size,sigma):
+    gauss = np.zeros(shape=(size,size))
+    for i in range(size):
+        for j in range(i+1):
+            gauss[i][j] = np.exp(-((i-size//2)**2 + (j-size//2)**2) / (2 * sigma**2))
+    for i in range(size):
+        for j in range(i+1,size):
+            gauss[i][j] = gauss[j][i]
+    gauss /= np.sum(gauss)
+    return gauss
 
 
 def main():
@@ -45,8 +63,11 @@ def main():
     for file in files:
         img = read_image(file)
         intensity = img_intensity(img)
-        sobel = sobel_apply(intensity)
-        make_new_image(sobel,file)
+        teste = gauss_filter(5,1.4)
+        #sobel = sobel_apply(intensity)
+        #prewitt = prewitt_apply(intensity)
+        teste = apply_op(intensity,teste,5)
+        make_new_image(teste,file)
     
 if __name__ == "__main__":
     main()
